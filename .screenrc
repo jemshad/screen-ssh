@@ -1,0 +1,32 @@
+# Do NOT COPY/PASTE this file contents using mouse. That will break control characters.
+# Copy to home directory as .screenrc
+# jemshad 
+
+defscrollback 30000
+
+startup_message off
+autodetach on # Autodetach session on hangup instead of terminating screen completely
+
+# Key shortcut for traversing between sessions inside screen
+# Use any of these convenient for you!
+ 
+# for shift right and left arrows
+bindkey ^[[1;2D prev
+bindkey ^[[1;2C next
+
+# alt-left and alt-right
+bindkey ^[[1;3D prev
+bindkey ^[[1;3C next
+##
+
+screen -t "SSH" $HOME/bin/screen_ssh
+screen -t "BASH" bash
+select 0
+
+
+#caption always 
+hardstatus alwayslastline
+#hardstatus string '%-Lw%{= BW}%50>%n%f* %t%{-}%+Lw%<'
+#hardstatus string '%{= kG}%-Lw%{= kW}%50> %n%f* %t%{= kG}%+Lw%< %{= kG}%-=%c:%s%{-}'
+hardstatus string '%{= kw}%-Lw%{= kG}%50> %n%f %t%{= kw}%+Lw%< %{= kw}%-=%c:%s%{-}'
+ 

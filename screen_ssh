@@ -1,0 +1,95 @@
+#!/bin/bash
+# script to ssh to boxes
+#
+# accepted patterns:
+#   abc[01-05].xyz.com
+#   abc[09-11].{colo1,colo2}.company.com
+#   abc01.{colo1,colo2}.company.com
+#   abc[02,05-07,11].company.com
+#   abc[09-11].company.com*2    -> opens two shells each to the given boxes
+#
+# Multiple patterns can be given space separated
+# Author: Jemshad O K - jemshad dot ok at gmail dot com
+#
+
+expand_hosts() {
+
+    local pat="$1"
+    local hostpart multiplier prefix suffix range i start end num host 
+
+    # if there is "*" in the pattern, multiply the pattern that many times
+    # ex: "abc[01-03]*2" should open two terminals each of the three boxes
+    if [[ $pat == *\** ]]; then
+        hostpart="${pat%%\**}"
+        multiplier="${pat##*\*}"
+
+        for ((i=1;i<=multiplier;i++)); do
+            expand_hosts "$hostpart"
+        done
+    elif [[ $pat == *{*}* ]]; then
+        # expand the braces first
+        prefix="${pat%%\{*}"
+        suffix="${pat##*\}}"
+
+        splits="${pat##*\{}"
+        splits="${splits%%\}*}"
+
+        for range in ${splits//,/ }; do
+            expand_hosts "${prefix}${range}${suffix}"
+        done
+    elif [[ $pat == *\[*\]* ]]; then
+        # expand the abc-[01,02-05,10].xyz cases
+        prefix="${pat%%[*}"
+        suffix="${pat##*]}" 
+ 
+        splits="${pat##*[}"
+        splits="${splits%%]*}"
+
+        for range in ${splits//,/ }; do
+            # expand the [02-05] format 
+            if [[ $range ==  *-* ]]; then
+                # get start and end number
+                start="${range%-*}"
+                end="${range#*-}"
+                num="${#end}"  # no.of digits in the number
+
+                # remove leading zeroes
+                shopt -s extglob
+                start="${start##+(0)}"
+                end="${end##+(0)}"
+                shopt -u extglob
+
+                for ((i=start;i<=end;i++));do
+                    host=$(printf "${prefix}%0${num}d$suffix\n" $i)
+                    expand_hosts "$host"
+                done
+            else
+                expand_hosts "${prefix}${range}${suffix}"
+            fi
+        done
+    else
+        echo "$pat"
+    fi
+}
+
+## main ##
+while :;do
+        unset hostpat hosts host
+        read -p "Host(s) to SSH> " -a hostpat
+        if [[ $hostpat == "" ]];then
+            continue
+        fi
+        for hostpattern in "${hostpat[@]}";do
+            hosts=(${hosts[@]} $(expand_hosts "$hostpattern"))
+        done
+
+        (for host in "${hosts[@]}";do
+            if [[ -z $host ]]; then
+                continue
+            fi
+            echo screen -t "${host%.inmobi.com}" ssh "${host}"
+        # jump box doesn't have sleep (1) also :-\
+        # work around with a busy loop
+            #for i in {1..5000}; do :; done 
+        done) &
+done
