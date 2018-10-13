@@ -88,8 +88,8 @@ while :;do
                 continue
             fi
             echo screen -t "${host%.inmobi.com}" ssh "${host}"
-        # jump box doesn't have sleep (1) also :-\
+        # designed to work with just shell where sleep(1) is not available
         # work around with a busy loop
-            #for i in {1..5000}; do :; done 
+            for i in {1..1000}; do :; done 
         done) &
 done
