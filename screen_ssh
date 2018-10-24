@@ -87,7 +87,7 @@ while :;do
             if [[ -z $host ]]; then
                 continue
             fi
-            echo screen -t "${host%.inmobi.com}" ssh "${host}"
+            screen -t "${host%.inmobi.com}" ssh "${host}"
         # designed to work with just shell where sleep(1) is not available
         # work around with a busy loop
             for i in {1..1000}; do :; done 
